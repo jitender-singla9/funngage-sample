@@ -6,3 +6,4 @@ storage/*.key
 .env
 Homestead.yaml
 Homestead.json
+vendor/
