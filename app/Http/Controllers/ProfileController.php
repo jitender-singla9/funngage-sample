@@ -12,6 +12,7 @@ class ProfileController extends Controller
 {
     public function saveProfile(Request $request) {
     	$inputs = json_decode($request->getContent(), true);
+    	$errors = array();
 
     	foreach ($inputs as $key => $input) {
     		if (array_key_exists('education', $input)) {
@@ -24,14 +25,15 @@ class ProfileController extends Controller
 		            ]);
 
 		            if ($validator->fails()) {
-			            if (count($validator->errors()) <= 1) {
-			                return response()->json(['status' => 'exception','response' => $validator->errors()->first()]);
-			            } else {
-			                return response()->json(['status' => 'exception','response' => 'All fields are required']);
-			            }
-			        }
+		            	$errors[] = $validator->errors();
+			        } else {
 
-    				Education::create($education);
+			        	try { 
+						  	Education::create($education);
+						} catch(\Illuminate\Database\QueryException $ex){ 
+						  	$errors[] = $ex->errorInfo[2];
+						}
+			        }
     			}
     		} elseif (array_key_exists('address', $input)) {
     			foreach ($input['address'] as $key => $address) {
@@ -43,16 +45,21 @@ class ProfileController extends Controller
 		            ]);
 
 		            if ($validator->fails()) {
-			            if (count($validator->errors()) <= 1) {
-			                return response()->json(['status' => 'exception','response' => $validator->errors()->first()]);
-			            } else {
-			                return response()->json(['status' => 'exception','response' => 'All fields are required']);
-			            }
-			        }
+			            $errors[] = $validator->errors();
+			        } else {
 
-    				Profile::create($address);
+			        	try { 
+						  	Profile::create($address);
+						} catch(\Illuminate\Database\QueryException $ex){ 
+						  	$errors[] = $ex->errorInfo[2];
+						}
+			        }
     			}
     		}
+    	}
+
+    	if (count($errors)) {
+            return response()->json(['status' => 'exception','response' => $errors]);
     	}
 
     	return response()->json(['status' => 'success','response' => 'Data saved successfully']);
